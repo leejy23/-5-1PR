@@ -1,159 +1,142 @@
 class Calculator {
-    $previousPreview
-    $currentPreview
-    previousOperation = ""
-    currentOpenration = ""
+  $previousPreview;
+  $currentPreview;
+  previousOperation = "";
+  currentOperation = "";
+  history = [];
+  $historyList;
 
-    constructor($previousPreview, $currentPreview) {
-        this.$previousPreview = $previousPreview
-        this.$currentPreview = $currentPreview
+  constructor($previousPreview, $currentPreview) {
+    this.$previousPreview = $previousPreview;
+    this.$currentPreview = $currentPreview;
+    this.history = [];
+    this.$historyList = document.querySelector("[data-history-list]");
+  }
+
+  onPressNumber(number) {
+    if (number === "." && this.$currentPreview.textContent.includes(".")) {
+      return;
+    }
+    this.$currentPreview.textContent += number;
+  }
+  onPressOperation(operation) {
+    this.$previousPreview.textContent =
+      this.$currentPreview.textContent + " " + operation;
+    this.$currentPreview.textContent = "";
+    this.previousOperation = operation;
+  }
+
+  onEqual() {
+    const operation = this.previousOperation.trim();
+    const previousValue = parseFloat(
+      this.$previousPreview.textContent.split(" ")[0]
+    );
+    const currentValue = parseFloat(this.$currentPreview.textContent);
+
+    if (isNaN(previousValue) || isNaN(currentValue)) {
+      alert("올바른 숫자를 입력해주세요");
+      return;
     }
 
-    onPressNumber(number) {
-       // 소수점 입력시 현재 입력 받은 데이터가 없는 경우
-       if (number === "." && this.$currentPreview.textContent.length < 1) {
-         return 
-       }
-
-       this.$currentPreview.textContent += number
-    }
-
-    onPressOperation(operation) {
-        // 연산기호 입력시 현재 입력 받은 데이터가 없는 경우
-        if (this.$currentPreview.textContent.length < 1) {
-            return 
+    let result = 0;
+    switch (operation) {
+      case "+":
+        result = previousValue + currentValue;
+        break;
+      case "-":
+        result = previousValue - currentValue;
+        break;
+      case "*":
+        result = previousValue * currentValue;
+        break;
+      case "÷":
+        if (currentValue === 0) {
+          alert("0으로 나눌 수 없습니다");
+          return;
         }
-        this.previousOperation = operation
-        this.$previousPreview.textContent = `${this.$currentPreview.textContent} ${operation}`
-        this.$currentPreview.textContent = ''
+        result = previousValue / currentValue;
+        break;
+      default:
+        return;
     }
 
-    onEqual() {
-        if (
-            this.$currentPreview.textContent.length < 1 ||
-            this.$previousPreview.textContent.length < 1 ||
-            this.previousOperation.length < 1
-        ) {
-            return
-        }
+    this.$currentPreview.textContent = "";
+    this.$previousPreview.textContent = "" + result;
+    const calculation = `${previousValue} ${operation} ${currentValue}`;
+    this.addToHistory(calculation, result);
+  }
 
-        let result = 0
+  onReset() {
+    this.$previousPreview.textContent = "";
+    this.$currentPreview.textContent = "";
+    this.previousOperation = "";
+    this.currentOperation = "";
+  }
 
-        switch (this.previousOperation) {
-            case "+":
-                result = this.handlePlus()
-                break
-            case "-":
-                result = this.handleMinus()
-                break
-            case "*":
-                result = this.handleMultiply()
-                break
-            case "÷":
-                result = this.handleDivide()
-                break
-            default:
-                break
-        }
-        this.$currentPreview.textContent = result.toString()
-        this.$previousPreview.textContent = ""
-        this.currentOperation = ""
-    }
+  onDelete() {
+    this.$currentPreview.textContent = this.$currentPreview.textContent.slice(
+      0,
+      -1
+    );
+  }
 
-    handlePlus() {
-        return (
-            Number(this.$previousPreview.textContent.split(" ")[0])
-            + Number(this.$currentPreview.textContent)
-        )
-    }
+  addToHistory(calculation, result) {
+    this.history.push(`${calculation} = ${result}`);
 
-    handleMinus() {
-        return (
-            Number(this.$previousPreview.textContent.split(" ")[0])
-            - Number(this.$currentPreview.textContent)
-        )
-    }
+    // DOM에 히스토리 추가
+    const historyItem = document.createElement("div");
+    historyItem.textContent = `${calculation} = ${result}`;
+    this.$historyList.insertBefore(historyItem, this.$historyList.firstChild);
+  }
 
-    handleMultiply() {
-        return (
-            Number(this.$previousPreview.textContent.split(" ")[0])
-            * Number(this.$currentPreview.textContent)
-        )
-    }
-
-    handleDivide() {
-        return (
-            Number(this.$previousPreview.textContent.split(" ")[0])
-            / Number(this.$currentPreview.textContent)
-        )
-    }
-
-    onReset() {
-        this.$currentPreview.textContent = ""
-        this.$previousPreview.textContent = ""
-        this.previousOperation = ""
-        this.currentOpenration = ""
-    }
-
-    onDelete() {
-        if (this.$currentPreview.textContent < 1) {
-            return
-        }
-
-        this.$currentPreview.textContent = this.$currentPreview.textContent.slice(0, -1)
-    }
+  showHistory() {
+    return this.history.join("\n");
+  }
 }
 
-// 값 표시
-const $previousPreview = document.querySelector('[data-previous-preview]')
-const $currentPreview = document.querySelector('[data-current-preview]')
-
 // 사칙연산
-const $plus = document.querySelector('[data-btn-plus]')
-const $minus = document.querySelector('[data-btn-minus]')
-const $multiply = document.querySelector('[data-btn-multiply]')
-const $divide = document.querySelector('[data-btn-divide]')
-const $eqaul = document.querySelector('[data-btn-eqaul]')
+const $plus = document.querySelector("[data-btn-plus]");
+const $minus = document.querySelector("[data-btn-minus]");
+const $divide = document.querySelector("[data-btn-divide]");
+const $multiply = document.querySelector("[data-btn-multiply]");
 
-// 리셋, 삭제
-const $reset = document.querySelector('[data-btn-reset]')
-const $delete = document.querySelector('[data-btn-delete]')
+// 연산
+const $eqaul = document.querySelector("[data-btn-eqaul]");
+
+// 전체삭제(AC), 삭제
+const $reset = document.querySelector("[data-btn-reset]");
+const $delete = document.querySelector("[data-btn-delete]");
 
 // 숫자, 연산
-const $numbers = document.querySelectorAll('[data-btn-number]')
-const $operations = document.querySelectorAll('[data-btn-operation]')
+const $numbers = document.querySelectorAll("[data-btn-number]");
+const $operations = document.querySelectorAll("[data-btn-operation]");
 
-const cal = new Calculator($previousPreview, $currentPreview)
+// 프롬포트
+const $previousPreview = document.querySelector("[data-previous-preview]");
+const $currentPreview = document.querySelector("[data-current-preview]");
+
+const calc = new Calculator($previousPreview, $currentPreview);
 
 $numbers.forEach(($number) => {
-    $number.addEventListener("click", (e) => {
-        cal.onPressNumber(e.target.textContent)
-    })
-})
+  $number.addEventListener("click", (e) => {
+    calc.onPressNumber(e.target.textContent);
+  });
+});
 
 $operations.forEach(($operation) => {
-    $operation.addEventListener("click", (e) => {
-       switch ($operation) {
-            case $plus:
-                cal.onPressOperation("+")
-                break;
-            case $minus:
-                cal.onPressOperation("-")
-                break;
-            case $multiply:
-                cal.onPressOperation("*")
-                break;
-            case $divide:
-                cal.onPressOperation("÷")
-                break;
-            case $eqaul:
-                cal.onEqual()
-                break;
-            default:
-                break;
-       }
-    })
-})
+  $operation.addEventListener("click", (e) => {
+    if (e.target.textContent.trim() == "=") {
+      calc.onEqual();
+    } else {
+      calc.onPressOperation(e.target.textContent);
+    }
+  });
+});
 
-$reset.addEventListener("click", (e) => cal.onReset())
-$delete.addEventListener("click", (e) => cal.onDelete())
+$reset.addEventListener("click", (e) => {
+  calc.onReset();
+});
+
+$delete.addEventListener("click", (e) => {
+  calc.onDelete();
+});
